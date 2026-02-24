@@ -6,10 +6,10 @@
 Клиент должен отправить серверу сообщение _«Hello, server»_, сервер выводит его у себя и отвечает _«Hello, client»_, которое отображается у клиента.
 
 ## Выполнение
-В данной задаче реализована программа, где:
-- **Клиент** отправляет строку `"Hello, server"` серверу по протоколу UDP.  
+В ходе выполнения были реализованы клиент и сервер, где:
+- **Клиент** отправляет строку `"Hello, server!"` серверу по протоколу UDP.  
 - **Сервер** принимает сообщение и выводит его в консоль.  
-- В ответ сервер отправляет строку `"Hello, client"`, которая отображается у клиента.  
+- В ответ сервер отправляет строку `"Hello, client!"`, которая отображается в консоли у клиента.  
 
 
 ### Клиент
@@ -19,12 +19,15 @@ import socket
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-request = "Hello, server"
-client_socket.sendto(request.encode(), ("localhost", 8080))
+server_address = ('localhost', 8080)
+message = 'Hello, server!'
+client_socket.sendto(message.encode(), server_address)
 
-response, address = client_socket.recvfrom(1024)
+response, server_addr = client_socket.recvfrom(1024)
+print(f'Ответ от сервера {server_addr}: {response.decode()}')
 
-print(response.decode())
+client_socket.close()
+print('клиент закрыт')
 ```
 
 ### Сервер
@@ -34,33 +37,37 @@ import socket
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-server_socket.bind(("localhost", 8080))
+server_socket.bind(('localhost', 8080))
+
+print("server running on port 8080")
 
 while True:
-    request, address = server_socket.recvfrom(1024)
+    data, client_address = server_socket.recvfrom(1024)
+    print(f'Получено от {client_address}: {data.decode()}')
 
-    print(request.decode())
-
-    response = "Hello, client"
-    server_socket.sendto(response.encode(), address)
+    response = "Hello, client!"
+    server_socket.sendto(response.encode(), client_address)
 ```
 
 ## Результат
 
-При запуске сервер ожидает сообщения:
+При запуске сервер ожидает сообщения.
 На стороне клиента:
 
 ```
-Hello, client
+Hello, client!
 ```
 
 На стороне сервера:
 
 ```
-Hello, server
+Hello, server!
 ```
+Результаты работы после запуска обоих файлов:
 
-![](assets/task1.png)
+
+![](assets/task1server.png)
+![](assets/task1client.png)
 
 ## Вывод
 

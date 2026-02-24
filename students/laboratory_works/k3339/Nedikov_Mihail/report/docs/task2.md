@@ -5,31 +5,26 @@
 Клиент запрашивает выполнение математической операции (в данном случае — **теорема Пифагора**), сервер обрабатывает данные и возвращает результат клиенту.
 
 ## Выполнение
-В данной задаче реализована программа, где:
-- **Клиент** подключается к серверу по TCP, вводит два числа и отправляет их.  
-- **Сервер** принимает числа, вычисляет гипотенузу по теореме Пифагора `sqrt(a^2 + b^2)` и возвращает результат клиенту.  
-- Обработаны ошибки: если введено меньше/больше чисел или отрицательные значения.
+В ходе выполнения были реализованы клиент и сервер, где:
+- **Клиент** подключается к серверу по TCP, вводит три числа и отправляет их.  
+- **Сервер** принимает числа, вычисляет решение квадратного уравнения вида `ax^2 + bx + c = 0` через формулу дискриминанта и возвращает результат клиенту.  
+- Также на сервере обработан случай, если уравнение не имеет действительных корней.
 
 ### Клиент
 ```python
 import socket
 
-# Создаем сокет
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Подключаемся к серверу
-client_socket.connect(("localhost", 8080))
+client_socket.connect(('localhost', 8080))
 
-data = input("Введите два числа через пробел (Теорема Пифагора): ")
+data = input("введите 3 числа через пробел для решения уравнения вида ax^2 + bx + c = 0:\n")
 
-# Отправляем сообщение серверу
 client_socket.sendall(data.encode())
 
-# Получаем ответ от сервера
 response = client_socket.recv(1024)
-print(response.decode())
+print(f'Ответ от сервера: {response.decode()}')
 
-# Закрываем соединение
 client_socket.close()
 ```
 
@@ -37,48 +32,50 @@ client_socket.close()
 ### Сервер
 ```python
 import socket
-import math
 
-# Создаем сокет
+# ax^2 + bx + c = 0
+def solve_sqr(a, b, c):
+    d = b**2 - 4*a*c
+    if d < 0:
+        return "дискриминант меньше 0"
+    else:
+        return f"ответ: x1 = {(-b + d**0.5)/(2*a)}, x2 = {(-b - d**0.5)/(2*a)}"
+
+
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Привязываем сокет к адресу и порту
-server_socket.bind(("localhost", 8080))
+server_socket.bind(('localhost', 8080))
 
-# Начинаем слушать входящие подключения (ожидание клиентов)
 server_socket.listen(1)
+print("Сервер запущен на порту 8080...")
 
 while True:
-    # Принимаем соединение от клиента
     client_connection, client_address = server_socket.accept()
+    print(f'Подключение от {client_address}')
 
-    # Получаем сообщение от клиента
-    request = client_connection.recv(1024).decode()
+    request = list(map(int, client_connection.recv(1024).decode().split()))
 
-    try:
-        numbers = list(map(float, request.split()))
-        if len(numbers) != 2:
-            raise ValueError("Нужно ввести ровно два числа.")
-        if any(n < 0 for n in numbers):
-            raise ValueError("Числа должны быть неотрицательными.")
-        result = str(math.sqrt(numbers[0] ** 2 + numbers[1] ** 2))
-    except ValueError:
-        result = "Ошибка: Введите два неотрицательных числа через пробел."
+    print(f'Данные от клиента: a:{request[0]} b:{request[1]} c:{request[2]}')
 
-    # Отправляем ответ клиенту
-    client_connection.sendall(result.encode())
+    response = solve_sqr(request[0], request[1], request[2])
 
-    # Закрываем соединение
+    client_connection.sendall(response.encode())
+
     client_connection.close()
+    print("соединение закрыто, ждем следующие запросы...")
 ```
 
 ## Результат
 
-Пример работы программы:
+Варианты ответа клиенту:
 
-![](assets/task2.png)
+![](assets/task2client0.png)
+![](assets/task2client1.png)
+
+Работа сервера:
+
+![](assets/task2server.png)
 
 ## Вывод
 
-Была реализована клиент-серверная архитектура с использованием TCP-сокетов.
-Клиент передает два числа, сервер рассчитывает гипотенузу по теореме Пифагора и возвращает результат.
+Была реализована клиент-серверная архитектура с использованием TCP-сокетов для решения квадратного уравнения.
